@@ -32,19 +32,22 @@
 
                     let resendBtn = document.getElementById("resend-otp-btn");
                     resendBtn.disabled = true;
-                    startCountdown(60);
+                    startCountdown(60, resendBtn);
                 }
             })
             .catch(error => alert("Error sending OTP!"));
         }
 
-        function startCountdown(seconds) {
-            let resendBtn = document.getElementById("resend-otp-btn");
+        function startCountdown(seconds, resendBtn) {
             let countdownText = document.getElementById("countdown-text");
 
             let timeLeft = seconds;
             countdownText.style.display = "inline"; 
             resendBtn.disabled = true;
+
+            if (countdown) {
+                clearInterval(countdown);  // Countdown सुरू असल्यास Reset करा
+            }
 
             countdown = setInterval(function () {
                 let minutes = Math.floor(timeLeft / 60);

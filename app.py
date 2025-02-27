@@ -86,7 +86,6 @@ def send_otp():
     except Exception as e:
         return jsonify({"message": f"Error sending OTP: {str(e)}", "status": "error"})
 
-# **Validate OTP from Database**
 @app.route('/validate', methods=['POST'])
 def validate():
     email = session.get('email')
