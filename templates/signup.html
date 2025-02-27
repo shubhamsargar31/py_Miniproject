@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='signup.css') }}" />
+
+    <script>
+        let countdown;
+
+        function sendOTP(event, isResend = false) {
+            if (event) event.preventDefault();
+            
+            let email = document.getElementById("email").value;
+            if (!email) {
+                alert("Please enter a valid email!");
+                return;
+            }
+
+            fetch('/send_otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'email=' + encodeURIComponent(email)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.status === "success") {
+                    document.getElementById("send-otp-btn").style.display = "none";
+                    document.getElementById("otp-container").style.display = "flex";
+
+                    let resendBtn = document.getElementById("resend-otp-btn");
+                    resendBtn.disabled = true;
+                    startCountdown(60);
+                }
+            })
+            .catch(error => alert("Error sending OTP!"));
+        }
+
+        function startCountdown(seconds) {
+            let resendBtn = document.getElementById("resend-otp-btn");
+            let countdownText = document.getElementById("countdown-text");
+
+            let timeLeft = seconds;
+            countdownText.style.display = "inline"; 
+            resendBtn.disabled = true;
+
+            countdown = setInterval(function () {
+                let minutes = Math.floor(timeLeft / 60);
+                let secondsLeft = timeLeft % 60;
+                countdownText.innerText = `(${minutes}m ${secondsLeft}s)`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    countdownText.innerText = "";
+                    resendBtn.disabled = false;
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        function validateOTP(event) {
+            event.preventDefault();
+            let otp = document.getElementById("otp").value;
+
+            fetch('/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'otp=' + encodeURIComponent(otp)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.status === "success") {
+                    window.location.href = "/scanner";  // Scanner Page Redirect
+                }
+            })
+            .catch(error => alert("Error validating OTP!"));
+        }
+    </script>
+</head>
+<body>
+    <section class="hero">
+        <div class="hero-content">
+            <div class="form-container">
+                <h2>Sign Up</h2>
+
+                <form id="otp-form">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    <button type="submit" id="send-otp-btn" class="btn" onclick="sendOTP(event)">Send OTP</button>
+                </form>
+
+                <form onsubmit="validateOTP(event)">
+                    <div id="otp-container" style="display: none; flex-direction: column; gap: 10px;">
+                        <label for="otp">OTP:</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="otp" name="otp" placeholder="Enter the OTP" required>
+                            <button type="button" id="resend-otp-btn" class="btn" onclick="sendOTP(event, true)" disabled>
+                                Resend OTP <span id="countdown-text"></span>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn">Sign Up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

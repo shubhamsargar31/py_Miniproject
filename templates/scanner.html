@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Scanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='scanner.css') }}">
+</head>
+<body>
+    <div class="label-container">
+        <div class="security-label">Services Provide Security</div>
+    </div>
+
+    <div class="form-container">
+        <h2>Security Scanner</h2>
+        <div class="input-group">
+            <label for="ipAddress">Enter IP Address:</label>
+            <input type="text" id="ipAddress" name="ipAddress" placeholder="e.g., 192.168.1.1">
+            <button type="button" onclick="startScan('ip')">Scan IP</button>
+            <div id="scanResultIp" class="result-box"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="website">Enter Website URL:</label>
+            <input type="url" id="website" name="website" placeholder="e.g., https://example.com">
+            <button type="button" onclick="startScan('website')">Scan Website</button>
+            <div id="scanResultWebsite" class="result-box"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="systemName">Enter System Name:</label>
+            <input type="text" id="systemName" name="systemName" placeholder="e.g., My-PC">
+            <button type="button" onclick="startScan('system')">Scan System</button>
+            <div id="scanResultSystem" class="result-box"></div>
+        </div>
+    </div>
+<script>
+        function startScan(type) {
+            let data = {};
+            let url = "";
+            let resultBox = "";
+
+            if (type === "ip") {
+                data.ipAddress = document.getElementById("ipAddress").value;
+                url = "/start_scan";
+                resultBox = "scanResultIp";
+            } else if (type === "website") {
+                data.website = document.getElementById("website").value;
+                url = "/scan_website";
+                resultBox = "scanResultWebsite";
+            } else if (type === "system") {
+                data.systemName = document.getElementById("systemName").value;
+                url = "/scan_system";
+                resultBox = "scanResultSystem";
+            }
+
+            document.getElementById(resultBox).innerHTML = "Scanning... Please wait.";
+
+            fetch(url, {
+                    method: "POST",
+                    body: new URLSearchParams(data),
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById(resultBox).innerHTML = JSON.stringify(data.result, null, 2);
+                })
+                .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>

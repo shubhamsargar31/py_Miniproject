@@ -1,0 +1,144 @@
+/* Import Fonts */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500&family=Share+Tech+Mono&display=swap');
+
+/* General Styles */
+
+body {
+    font-family: 'Rajdhani', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #121212;
+    color: #fff;
+}
+
+
+/* Hero Section */
+
+.hero {
+    height: 100vh;
+    background: url('pxfuel.jpg') no-repeat center center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+}
+
+
+/* Add dark overlay for better text readability */
+
+.hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+
+/* Cyber-Themed Hero Content Container with More Transparency */
+
+.hero-content {
+    background: rgba(0, 0, 0, 0.0);
+    /* Increased transparency to 0.2 */
+    padding: 30px;
+    border-radius: 15px;
+    position: relative;
+    opacity: 0;
+    transform: translateY(50px);
+    animation: fadeInUp 1s forwards;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.5), 0 0 30px rgba(0, 255, 204, 0.5);
+    border: 2px solid #00ffcc;
+    /* Neon green border */
+    backdrop-filter: blur(5px);
+    /* Adds a blur effect behind the container */
+}
+
+
+/* Cyber-Themed Hero Title */
+
+.hero h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3em;
+    color: #00ffcc;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #007777;
+    animation: cyberGlitch 1.5s infinite alternate;
+}
+
+
+/* Cyber Glitch Animation */
+
+@keyframes cyberGlitch {
+    0% {
+        text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #007777;
+    }
+    50% {
+        text-shadow: -2px -2px 15px #00ffcc, 2px 2px 25px #007777;
+    }
+    100% {
+        text-shadow: 2px 2px 15px #00ffcc, -2px -2px 25px #007777;
+    }
+}
+
+
+/* Fade In and Slide Up Animation */
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Hero Paragraph */
+
+.hero p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.3em;
+    color: #cccccc;
+    margin-top: 15px;
+}
+
+
+/* Cyber Button */
+
+.btn {
+    display: inline-block;
+    padding: 12px 25px;
+    background: #00ffcc;
+    color: #121212;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 1px;
+    transition: 0.3s;
+    margin-top: 20px;
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
+}
+
+.btn:hover {
+    background: #007777;
+    color: #fff;
+}
+
+
+/* Footer */
+
+footer {
+    text-align: center;
+    padding: 15px;
+    background: #222;
+    font-size: 1em;
+    font-family: 'Rajdhani', sans-serif;
+    color: #00ffcc;
+}
