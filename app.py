@@ -10,7 +10,6 @@ import os
 import platform
 from flask_sqlalchemy import SQLAlchemy
 
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:shubham123@localhost:5432/sign_up'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -59,7 +58,6 @@ app.config['MAIL_USE_SSL'] = False
 mail = Mail(app)
 
 
-# **Send OTP & Store in Database**
 @app.route('/send_otp', methods=['POST'])
 def send_otp():
     email = request.form.get('email')
