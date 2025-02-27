@@ -8,10 +8,25 @@ from bs4 import BeautifulSoup
 import threading
 import os
 import platform
+from flask_sqlalchemy import SQLAlchemy
 
 
-#Signup Model 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:shubham123@localhost:5432/sign_up'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
+class Signup(db.Model):
+    __tablename__ = "signups" 
+    id = db.Column(db.Integer, primary_key=True)
+    gmail = db.Column(db.String(40), unique=True, nullable=False)
+    otp = db.Column(db.String(6), nullable=False)  
+
+
+with app.app_context():
+    db.create_all()
+
 app.secret_key = 'your_secret_key'
 
 
@@ -26,16 +41,14 @@ def signup():
 @app.route('/scanner')
 def scanner_page():
     return render_template('scanner.html')
-    
 
-# Load configuration from JSON
+
 try:
     with open('config.json', 'r') as f:
         params = json.load(f).get('param', {})
 except (FileNotFoundError, json.JSONDecodeError):
     params = {}
 
-# Flask-Mail Configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USERNAME'] = params.get('gmail-user', '')
@@ -46,43 +59,54 @@ app.config['MAIL_USE_SSL'] = False
 mail = Mail(app)
 
 
-
+# **Send OTP & Store in Database**
 @app.route('/send_otp', methods=['POST'])
 def send_otp():
     email = request.form.get('email')
     if not email:
-        return jsonify({"message": " Please enter a valid email!", "status": "error"})
+        return jsonify({"message": "Please enter a valid email!", "status": "error"})
 
-    otp_code = str(random.randint(100000, 999999))
+    otp_code = str(random.randint(100000, 999999))  
     session['otp'] = otp_code
     session['email'] = email  
+
+    
+    user = Signup.query.filter_by(gmail=email).first()
+    if user:
+        user.otp = otp_code  
+    else:
+        user = Signup(gmail=email, otp=otp_code)  
+        db.session.add(user)
+
+    db.session.commit()
 
     try:
         msg = Message('Your OTP for Verification', sender=app.config['MAIL_USERNAME'], recipients=[email])
         msg.body = f"Your OTP is {otp_code}. It will expire in 1 minute."
         mail.send(msg)
-        return jsonify({"message": " OTP Sent Successfully! Check your email.", "status": "success"})
+        return jsonify({"message": "OTP Sent Successfully! Check your email.", "status": "success"})
     except Exception as e:
-        return jsonify({"message": f" Error sending OTP: {str(e)}", "status": "error"})
+        return jsonify({"message": f"Error sending OTP: {str(e)}", "status": "error"})
 
+# **Validate OTP from Database**
 @app.route('/validate', methods=['POST'])
 def validate():
+    email = session.get('email')
     entered_otp = request.form.get('otp')
-    if not entered_otp:
-        return jsonify({"message": " Please enter the OTP!", "status": "error"})
 
-    if 'otp' in session and entered_otp == session['otp']:
+    if not entered_otp or not email:
+        return jsonify({"message": "Please enter the OTP!", "status": "error"})
+
+    user = Signup.query.filter_by(gmail=email).first()
+
+    if user and user.otp == entered_otp:
         session.pop('otp', None)
-        return jsonify({"message": " OTP Verified! Signup Successfull...", "status": "success", "redirect": url_for('scanner_page')})
+        return jsonify({"message": "OTP Verified! Signup Successful...", "status": "success", "redirect": url_for('scanner_page')})
 
     return jsonify({"message": "Invalid OTP, please try again.", "status": "error"})
 
 
-
-
-
-
-# Scanning model
+# Scanning Model
 
 scan_results = {}
 
