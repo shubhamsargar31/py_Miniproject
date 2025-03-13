@@ -8,19 +8,20 @@ from bs4 import BeautifulSoup
 import threading
 import os
 import platform
+import subprocess
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:shubham123@localhost:5432/sign_up'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-
 class Signup(db.Model):
-    __tablename__ = "signups" 
+    __tablename__ = "signups"
     id = db.Column(db.Integer, primary_key=True)
     gmail = db.Column(db.String(40), unique=True, nullable=False)
-    otp = db.Column(db.String(6), nullable=False)  
+    otp = db.Column(db.String(6), nullable=False)
 
 
 with app.app_context():
@@ -28,6 +29,22 @@ with app.app_context():
 
 app.secret_key = 'your_secret_key'
 
+
+try:
+    with open('config.json', 'r') as f:
+        params = json.load(f).get('param', {})
+except (FileNotFoundError, json.JSONDecodeError):
+    params = {}
+
+# Mail Configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = params.get('gmail-user', '')
+app.config['MAIL_PASSWORD'] = params.get('gmail-password', '')
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+
+mail = Mail(app)
 
 @app.route('/')
 def home():
@@ -41,39 +58,22 @@ def signup():
 def scanner_page():
     return render_template('scanner.html')
 
-
-try:
-    with open('config.json', 'r') as f:
-        params = json.load(f).get('param', {})
-except (FileNotFoundError, json.JSONDecodeError):
-    params = {}
-
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USERNAME'] = params.get('gmail-user', '')
-app.config['MAIL_PASSWORD'] = params.get('gmail-password', '')
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-
-mail = Mail(app)
-
-
 @app.route('/send_otp', methods=['POST'])
 def send_otp():
     email = request.form.get('email')
     if not email:
         return jsonify({"message": "Please enter a valid email!", "status": "error"})
 
-    otp_code = str(random.randint(100000, 999999))  
-    session['otp'] = otp_code
-    session['email'] = email  
+    otp_code = str(random.randint(100000, 999999))
 
-    
+    session['otp'] = otp_code
+    session['email'] = email
+
     user = Signup.query.filter_by(gmail=email).first()
     if user:
-        user.otp = otp_code  
+        user.otp = otp_code
     else:
-        user = Signup(gmail=email, otp=otp_code)  
+        user = Signup(gmail=email, otp=otp_code)
         db.session.add(user)
 
     db.session.commit()
@@ -102,15 +102,18 @@ def validate():
 
     return jsonify({"message": "Invalid OTP, please try again.", "status": "error"})
 
-
 # Scanning Model
-
 scan_results = {}
 
 def is_ip_alive(ip):
     param = "-n 1" if platform.system().lower() == "windows" else "-c 1"
-    response = os.system(f"ping {param} {ip} > nul 2>&1" if platform.system().lower() == "windows" else f"ping {param} {ip} > /dev/null 2>&1")
-    return response == 0
+    try:
+        result = subprocess.run(
+            ["ping", param, ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
 
 def scan_ip(ip):
     scan_results[ip] = "Scanning..."
@@ -142,7 +145,7 @@ def scan_website(url):
 
 @app.route("/start_scan", methods=["POST"])
 def start_scan():
-    ip = request.form["ipAddress"]
+    ip = request.form.get("ipAddress")
     if not ip:
         return jsonify({"error": "No IP provided"}), 400
 
@@ -158,7 +161,7 @@ def get_scan_result(ip):
 
 @app.route("/scan_website", methods=["POST"])
 def website_scan():
-    url = request.form["website"]
+    url = request.form.get("website")
     if not url:
         return jsonify({"error": "No URL provided"}), 400
 
